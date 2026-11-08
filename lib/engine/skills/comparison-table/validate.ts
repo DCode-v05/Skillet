@@ -1,14 +1,3 @@
-/**
- * TypeScript port of `scripts/validate.sh` for the comparison-table widget.
- *
- * The shell script is what the agent (and a human running `bash
- * scripts/validate.sh path.json`) invokes via python3. THIS file is what
- * the running engine calls before rendering — same rules, same error
- * messages, no subprocess.
- *
- * Returns { valid, issues } — same shape as the HTML validator.
- */
-
 import type {
   ComparisonTableWidget,
   CellFormat,
@@ -28,8 +17,6 @@ const VALID_FORMATS: ReadonlySet<CellFormat> = new Set([
   "rating",
 ]);
 
-// Match only short, single-line [...] that look like template placeholders:
-// start with a letter, no newlines, no quotes/braces inside.
 const PLACEHOLDER_RE = /\[[A-Za-z][^\]\n"{}]*\]/g;
 
 export function validateComparisonTable(input: unknown): ValidationResult {
@@ -40,14 +27,12 @@ export function validateComparisonTable(input: unknown): ValidationResult {
   }
   const data = input as Record<string, unknown>;
 
-  // 2. No leftover [bracketed placeholders] from the template
   walkStrings(data, (s) => {
     for (const m of s.matchAll(PLACEHOLDER_RE)) {
       issues.push(`unfilled placeholder still present in a string value: ${m[0]}`);
     }
   });
 
-  // 3. Required top-level fields
   for (const k of [
     "widget",
     "version",
@@ -61,14 +46,12 @@ export function validateComparisonTable(input: unknown): ValidationResult {
   }
   if (issues.length > 0) return fail(issues);
 
-  // 4. Widget type
   if (data.widget !== "comparison-table") {
     issues.push(
       `widget must be 'comparison-table', got '${String(data.widget)}'`,
     );
   }
 
-  // 5. Options: 2–6, unique IDs
   if (!Array.isArray(data.options)) {
     issues.push(`options must be an array`);
     return fail(issues);
@@ -87,7 +70,6 @@ export function validateComparisonTable(input: unknown): ValidationResult {
     }
   }
 
-  // 6. Attributes: 4–10, unique IDs, valid format
   if (!Array.isArray(data.attributes)) {
     issues.push(`attributes must be an array`);
     return fail(issues);
@@ -114,7 +96,6 @@ export function validateComparisonTable(input: unknown): ValidationResult {
       );
     }
 
-    // 7. Every option has a cell
     const cells = (a.cells ?? {}) as Record<string, Record<string, unknown>>;
     for (const oid of optIds) {
       const cell = cells[oid];
@@ -130,7 +111,6 @@ export function validateComparisonTable(input: unknown): ValidationResult {
       }
     }
 
-    // 8. At most one winner per attribute row
     const winners = Object.entries(cells).filter(
       ([, c]) => c.isWinner === true,
     );
@@ -141,7 +121,6 @@ export function validateComparisonTable(input: unknown): ValidationResult {
     }
   }
 
-  // 9. followUps: exactly 3 non-empty strings
   const fu = data.followUps;
   if (
     !Array.isArray(fu) ||
@@ -151,7 +130,6 @@ export function validateComparisonTable(input: unknown): ValidationResult {
     issues.push(`followUps must be exactly 3 non-empty strings`);
   }
 
-  // 10. Title length
   const title = String(data.title ?? "");
   if (title.length > 80) {
     issues.push(`title exceeds 80 chars (${title.length})`);
@@ -180,7 +158,6 @@ function walkStrings(node: unknown, visit: (s: string) => void): void {
   }
 }
 
-/** Type guard wrapping `validateComparisonTable`. */
 export function isComparisonTableWidget(
   input: unknown,
 ): input is ComparisonTableWidget {

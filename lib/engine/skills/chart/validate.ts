@@ -1,8 +1,3 @@
-/**
- * Chart widget validator — six variants. The renderer trusts the schema
- * after validation, so every numeric / index invariant the renderer relies
- * on must be enforced here.
- */
 import type {
   ChartBarWidget,
   ChartFunnelWidget,
@@ -62,8 +57,6 @@ export function validateChart(input: unknown): ValidationResult {
   }
 }
 
-// -- bar ---------------------------------------------------------------
-
 function validateBar(
   data: Record<string, unknown>,
   issues: string[],
@@ -106,8 +99,6 @@ function validateBar(
   );
 }
 
-// -- pie ---------------------------------------------------------------
-
 function validatePie(
   data: Record<string, unknown>,
   issues: string[],
@@ -143,8 +134,6 @@ function validatePie(
     `OK: chart/pie valid (${slices.length} slice${slices.length === 1 ? "" : "s"})`,
   );
 }
-
-// -- scatter -----------------------------------------------------------
 
 function validateScatter(
   data: Record<string, unknown>,
@@ -190,8 +179,6 @@ function validateScatter(
   );
 }
 
-// -- funnel ------------------------------------------------------------
-
 function validateFunnel(
   data: Record<string, unknown>,
   issues: string[],
@@ -236,8 +223,6 @@ function validateFunnel(
     `OK: chart/funnel valid (${stages.length} stage${stages.length === 1 ? "" : "s"})`,
   );
 }
-
-// -- radar -------------------------------------------------------------
 
 function validateRadar(
   data: Record<string, unknown>,
@@ -315,8 +300,6 @@ function validateRadar(
     `OK: chart/radar valid (${axes.length} axes × ${entities.length} entit${entities.length === 1 ? "y" : "ies"})`,
   );
 }
-
-// -- heatmap -----------------------------------------------------------
 
 function validateHeatmap(
   data: Record<string, unknown>,
@@ -414,8 +397,6 @@ function validateHeatmap(
   );
 }
 
-// -- helpers -----------------------------------------------------------
-
 function requireNonEmptyString(
   data: Record<string, unknown>,
   key: string,
@@ -433,7 +414,6 @@ export function isChartWidget(input: unknown): input is ChartWidget {
   return validateChart(input).valid;
 }
 
-// Re-export types for convenience.
 export type {
   ChartBarWidget,
   ChartFunnelWidget,

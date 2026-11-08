@@ -13,11 +13,6 @@ function triggerDownload(content: string, ext: string, mime: string): void {
   URL.revokeObjectURL(url);
 }
 
-/**
- * Download the widget's JSON payload as a .json file. After the HTML →
- * JSON migration, the widget IS its JSON; rendering happens in React.
- * Consumers who want HTML can render the React component themselves.
- */
 export function downloadWidget(widget: JsonWidget): void {
   const content = JSON.stringify(widget, null, 2);
   triggerDownload(content, "json", "application/json");

@@ -8,16 +8,6 @@ import type {
   ComparisonTableWidget,
 } from "@/lib/types/widgets/comparison-table";
 
-/**
- * Renderer for the `comparison-table` JSON widget.
- *
- * The host (ChatShell's global click delegator) already wires
- * `[data-bap-prompt]` to "send as next user message". We substitute the
- * model's `{option}` / `{attribute}` / `{value}` / `{options}` placeholders
- * into concrete prompts at render time and write them onto `data-bap-prompt`
- * — no changes to the delegator needed.
- */
-
 interface Props {
   widget: ComparisonTableWidget;
 }
@@ -184,9 +174,6 @@ function CellValue({ value, format }: { value: string; format: CellFormat }) {
   }
 }
 
-// Substitute {option}/{attribute}/{value}/{options} placeholders. Unknown
-// placeholders are left untouched (defensive — easier to debug a leftover
-// "{foo}" in the prompt than a silently-stripped one).
 function fillTemplate(tpl: string, vars: Record<string, string>): string {
   return tpl.replace(/\{(\w+)\}/g, (m, k: string) =>
     Object.prototype.hasOwnProperty.call(vars, k) ? vars[k] : m,

@@ -1,19 +1,5 @@
 "use client";
 
-/**
- * Plan widget renderer — dispatches by `variant`.
- *
- * - steps:    vertical numbered-circle list. The "current" circle is filled
- *             BAP-red with white text; the rest are outlined. All shapes are
- *             real SVG (no Unicode glyph rendering surprises).
- * - dated:    3-column grid — monospace right-aligned date · dot + vertical
- *             line connecting all dots (real SVG circles + CSS-positioned
- *             line) · content. One accent event uses BAP red.
- * - schedule: inline SVG Gantt chart. The model only supplies ISO dates;
- *             this renderer derives every x / width / month tick position
- *             from `dateRange` so bars align to the axis pixel-deterministically.
- */
-
 import type {
   PlanDatedWidget,
   PlanScheduleWidget,
@@ -29,8 +15,6 @@ export function PlanWidget({ widget }: { widget: PlanWidget }) {
   if (widget.variant === "dated") return <DatedView widget={widget} />;
   return <ScheduleView widget={widget} />;
 }
-
-/* --------------------------------- steps --------------------------------- */
 
 function StepsView({ widget }: { widget: PlanStepsWidget }) {
   return (
@@ -61,11 +45,6 @@ function StepsView({ widget }: { widget: PlanStepsWidget }) {
   );
 }
 
-/**
- * SVG numbered circle. Filled BAP-red with white text when `current`, else
- * a transparent circle outlined in the muted color with the number drawn in
- * the muted color. Always renders the same — no font fallback risk.
- */
 function StepCircle({ n, current }: { n: number; current: boolean }) {
   if (current) {
     return (
@@ -124,8 +103,6 @@ function StepCircle({ n, current }: { n: number; current: boolean }) {
   );
 }
 
-/* --------------------------------- dated --------------------------------- */
-
 function DatedView({ widget }: { widget: PlanDatedWidget }) {
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -133,7 +110,6 @@ function DatedView({ widget }: { widget: PlanDatedWidget }) {
         {widget.title}
       </h3>
       <div className="relative">
-        {/* Vertical line, positioned to match the dot column's center. */}
         <div
           aria-hidden="true"
           className="absolute top-1.5 bottom-1.5 w-px bg-[var(--border)]"
@@ -201,8 +177,6 @@ function DatedDot({ color, accent }: { color: string; accent: boolean }) {
   );
 }
 
-/* -------------------------------- schedule -------------------------------- */
-
 interface MonthTick {
   x: number;
   label: string;
@@ -211,7 +185,7 @@ interface MonthTick {
 const SVG_WIDTH = 600;
 const LEFT_MARGIN = 160;
 const RIGHT_PAD = 10;
-const CHART_WIDTH = SVG_WIDTH - LEFT_MARGIN - RIGHT_PAD; // 430
+const CHART_WIDTH = SVG_WIDTH - LEFT_MARGIN - RIGHT_PAD;
 const AXIS_Y = 30;
 const ROW_START_Y = 50;
 const ROW_HEIGHT = 40;
@@ -232,36 +206,27 @@ const MONTH_NAMES = [
   "Dec",
 ];
 
-/** Parse YYYY-MM-DD to a UTC timestamp. Returns NaN if invalid. */
 function parseISO(s: string): number {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return NaN;
   return Date.parse(s + "T00:00:00Z");
 }
 
-/** Linear interpolation: time t in [t0, t1] → x in [LEFT_MARGIN, LEFT_MARGIN+CHART_WIDTH]. */
 function xFor(t: number, t0: number, t1: number): number {
   if (t1 <= t0) return LEFT_MARGIN;
   const frac = (t - t0) / (t1 - t0);
   return LEFT_MARGIN + frac * CHART_WIDTH;
 }
 
-/**
- * Compute month-start tick positions across [t0, t1]. Always include the
- * range-start label even if it isn't the first of the month, and add the
- * first day of each subsequent month that falls inside the range.
- */
 function monthTicks(t0: number, t1: number): MonthTick[] {
   const out: MonthTick[] = [];
   if (Number.isNaN(t0) || Number.isNaN(t1) || t1 <= t0) return out;
 
   const start = new Date(t0);
-  // Always label the start of the range.
   out.push({
     x: xFor(t0, t0, t1),
     label: MONTH_NAMES[start.getUTCMonth()],
   });
 
-  // Walk month-by-month from the first day of the *next* month.
   const cursor = new Date(
     Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 1, 1),
   );
@@ -298,7 +263,6 @@ function ScheduleView({ widget }: { widget: PlanScheduleWidget }) {
           aria-label={widget.title}
           style={{ minWidth: 480 }}
         >
-          {/* Axis baseline */}
           <line
             x1={LEFT_MARGIN}
             y1={AXIS_Y + 6}
@@ -308,7 +272,6 @@ function ScheduleView({ widget }: { widget: PlanScheduleWidget }) {
             opacity="0.15"
           />
 
-          {/* Month labels */}
           {ticks.map((t, i) => (
             <text
               key={`tick-${i}`}
@@ -324,7 +287,6 @@ function ScheduleView({ widget }: { widget: PlanScheduleWidget }) {
             </text>
           ))}
 
-          {/* Row separators (very subtle) */}
           {widget.tasks.map((_, i) => {
             const y = ROW_START_Y + (i + 1) * ROW_HEIGHT;
             if (i === widget.tasks.length - 1) return null;
@@ -341,13 +303,12 @@ function ScheduleView({ widget }: { widget: PlanScheduleWidget }) {
             );
           })}
 
-          {/* Task rows */}
           {widget.tasks.map((task, i) => {
             const ts = parseISO(task.startISO);
             const te = parseISO(task.endISO);
             const x = Number.isNaN(ts) ? LEFT_MARGIN : xFor(ts, t0, t1);
             const xEnd = Number.isNaN(te) ? x : xFor(te, t0, t1);
-            const w = Math.max(2, xEnd - x); // never collapse to zero
+            const w = Math.max(2, xEnd - x);
             const rowY = ROW_START_Y + i * ROW_HEIGHT;
             const barY = rowY + (ROW_HEIGHT - BAR_HEIGHT) / 2;
             const labelY = rowY + ROW_HEIGHT / 2;
@@ -379,7 +340,6 @@ function ScheduleView({ widget }: { widget: PlanScheduleWidget }) {
             );
           })}
 
-          {/* today marker */}
           {todayInRange ? (
             <g>
               <line

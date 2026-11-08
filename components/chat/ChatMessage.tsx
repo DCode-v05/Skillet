@@ -67,7 +67,6 @@ function WidgetActions({ widget }: { widget: JsonWidget }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      /* clipboard may be blocked — best-effort */
     }
   };
 

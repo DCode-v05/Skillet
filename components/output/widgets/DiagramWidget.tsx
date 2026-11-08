@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * Diagram renderer — five variants of node-link diagrams. All pixel
- * geometry is computed here from the model's *structural* JSON. The model
- * never specifies coordinates; this file owns every x/y, every arrow
- * endpoint, every centroid.
- *
- * This is the renderer that resolves the long-standing HTML diagram
- * complaint that "arrows are not perfect" — arrows now connect to the
- * computed edge of each node's bounding box, not to the box's center,
- * and arrow markers point in the correct direction by construction.
- */
-
 import type {
   DiagramFlowEdge,
   DiagramFlowNode,
@@ -25,10 +13,6 @@ import type {
   DiagramWidget,
 } from "@/lib/types/widgets/diagram";
 
-/* ------------------------------------------------------------------ */
-/* Shared visual constants                                            */
-/* ------------------------------------------------------------------ */
-
 const BAP_RED = "#EC3B4A";
 const VENN_BLUE = "#7dd3fc";
 const VENN_AMBER = "#fbbf24";
@@ -38,10 +22,6 @@ const MUTED_STROKE = "#555";
 const ARROW_FILL = "#888";
 const LIFELINE = "#333";
 const RESPONSE_STROKE = "#888";
-
-/* ------------------------------------------------------------------ */
-/* Entry point                                                        */
-/* ------------------------------------------------------------------ */
 
 export function DiagramWidget({ widget }: { widget: DiagramWidget }) {
   switch (widget.variant) {
@@ -77,10 +57,6 @@ function Shell({
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Flow                                                                */
-/* ------------------------------------------------------------------ */
-
 const FLOW_BOX_W = 120;
 const FLOW_BOX_H = 44;
 const FLOW_GAP_X = 40;
@@ -90,14 +66,13 @@ const FLOW_TOP_MARGIN = 30;
 
 interface FlowBox {
   node: DiagramFlowNode;
-  x: number; // top-left
+  x: number;
   y: number;
   cx: number;
   cy: number;
 }
 
 function FlowDiagram({ widget }: { widget: DiagramFlowWidget }) {
-  // 1) compute box positions from (row, col)
   const boxes: Record<string, FlowBox> = {};
   let maxRow = 0;
   let maxCol = 0;
@@ -139,7 +114,6 @@ function FlowDiagram({ widget }: { widget: DiagramFlowWidget }) {
           </marker>
         </defs>
 
-        {/* edges below boxes so arrowheads sit under the box outline */}
         {widget.edges.map((e, i) => (
           <FlowEdgeRender key={`e-${i}`} edge={e} boxes={boxes} />
         ))}
@@ -181,21 +155,6 @@ function FlowDiagram({ widget }: { widget: DiagramFlowWidget }) {
   );
 }
 
-/**
- * Compute the polyline for a single flow edge — endpoints are clipped to
- * the source/target box edges (NEVER to box centers). The polyline routes
- * orthogonally with at most one bend.
- *
- * Algorithm:
- *   - If source and target share a row → straight horizontal line from
- *     source right-midpoint (or left if going backwards) to target's
- *     opposing left-midpoint.
- *   - If they share a column → straight vertical line from source's
- *     bottom-midpoint (or top) to target's opposing top-midpoint.
- *   - Otherwise → exit the source from its bottom (if target is below)
- *     or top (if above), bend at the target's column, enter the target
- *     from its left or right edge.
- */
 function FlowEdgeRender({
   edge,
   boxes,
@@ -213,7 +172,6 @@ function FlowEdgeRender({
   let pts: [number, number][];
 
   if (sameRow) {
-    // horizontal: exit from one side, enter the opposing side
     if (b.node.col > a.node.col) {
       pts = [
         [a.x + FLOW_BOX_W, a.cy],
@@ -238,11 +196,10 @@ function FlowEdgeRender({
       ];
     }
   } else {
-    // Orthogonal one-bend routing: vertical first, then horizontal.
     const exitY =
-      b.node.row > a.node.row ? a.y + FLOW_BOX_H : a.y; // exit bottom or top
+      b.node.row > a.node.row ? a.y + FLOW_BOX_H : a.y;
     const enterX =
-      b.node.col > a.node.col ? b.x : b.x + FLOW_BOX_W; // enter left or right
+      b.node.col > a.node.col ? b.x : b.x + FLOW_BOX_W;
     pts = [
       [a.cx, exitY],
       [a.cx, b.cy],
@@ -254,7 +211,6 @@ function FlowEdgeRender({
     .map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]},${p[1]}`)
     .join(" ");
 
-  // Edge label at the geometric midpoint of the polyline (by segment length).
   const labelPos = polylineMidpoint(pts);
 
   return (
@@ -293,7 +249,6 @@ function FlowEdgeRender({
 }
 
 function polylineMidpoint(pts: [number, number][]): { x: number; y: number } {
-  // total length, then walk to half
   let total = 0;
   const segs: number[] = [];
   for (let i = 1; i < pts.length; i += 1) {
@@ -319,10 +274,6 @@ function polylineMidpoint(pts: [number, number][]): { x: number; y: number } {
   return { x: last[0], y: last[1] };
 }
 
-/* ------------------------------------------------------------------ */
-/* Sequence                                                            */
-/* ------------------------------------------------------------------ */
-
 const SEQ_WIDTH = 600;
 const SEQ_HEADER_Y = 20;
 const SEQ_LIFELINE_TOP = 30;
@@ -335,7 +286,6 @@ function SequenceDiagram({ widget }: { widget: DiagramSequenceWidget }) {
   const height = SEQ_FIRST_MSG_Y + messageCount * SEQ_MSG_GAP + 30;
   const lifelineBottom = height - 20;
 
-  // Evenly distribute actor x positions across the SVG width.
   const actorXs: number[] = [];
   const slot = SEQ_WIDTH / n;
   for (let i = 0; i < n; i += 1) {
@@ -374,7 +324,6 @@ function SequenceDiagram({ widget }: { widget: DiagramSequenceWidget }) {
           </marker>
         </defs>
 
-        {/* actor headers + lifelines */}
         {widget.actors.map((actor, i) => (
           <g key={`actor-${i}`}>
             <text
@@ -398,15 +347,12 @@ function SequenceDiagram({ widget }: { widget: DiagramSequenceWidget }) {
           </g>
         ))}
 
-        {/* messages */}
         {widget.messages.map((m, i) => {
           const y = SEQ_FIRST_MSG_Y + i * SEQ_MSG_GAP;
           const fromX = actorXs[m.fromIdx];
           const toX = actorXs[m.toIdx];
           if (fromX === undefined || toX === undefined) return null;
 
-          // Inset slightly off the lifeline so the arrowhead lands cleanly
-          // on the target lifeline without sitting on top of the text.
           const dir = toX > fromX ? 1 : -1;
           const x1 = fromX + dir * 2;
           const x2 = toX - dir * 2;
@@ -452,10 +398,6 @@ function SequenceDiagram({ widget }: { widget: DiagramSequenceWidget }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Tree                                                                */
-/* ------------------------------------------------------------------ */
-
 const TREE_BOX_W = 110;
 const TREE_BOX_H = 36;
 const TREE_HORIZ_GAP = 30;
@@ -466,7 +408,7 @@ const TREE_TOP_MARGIN = 20;
 interface TreeLayoutNode {
   node: DiagramTreeNode;
   depth: number;
-  x: number; // logical x slot (float)
+  x: number;
   children: TreeLayoutNode[];
 }
 
@@ -476,7 +418,6 @@ function layoutTree(node: DiagramTreeNode, depth: number): TreeLayoutNode {
 }
 
 function assignTreeX(root: TreeLayoutNode, counter: { i: number }): void {
-  // Post-order: leaves get sequential slots, parents take the mean of children.
   if (root.children.length === 0) {
     root.x = counter.i;
     counter.i += 1;
@@ -519,14 +460,12 @@ function TreeDiagram({ widget }: { widget: DiagramTreeWidget }) {
   const all: TreeLayoutNode[] = [];
   collectTreeNodes(root, all);
 
-  // Pixel position of a node given its logical x slot and depth.
   function px(n: TreeLayoutNode): { x: number; y: number; cx: number; cy: number } {
     const x = n.x * (TREE_BOX_W + TREE_HORIZ_GAP) + TREE_LEFT_MARGIN;
     const y = n.depth * (TREE_BOX_H + TREE_VERT_GAP) + TREE_TOP_MARGIN;
     return { x, y, cx: x + TREE_BOX_W / 2, cy: y + TREE_BOX_H / 2 };
   }
 
-  // collect edges (parent center-bottom → child center-top)
   const edges: Array<{
     x1: number;
     y1: number;
@@ -555,7 +494,6 @@ function TreeDiagram({ widget }: { widget: DiagramTreeWidget }) {
         style={{ width: "100%", height: "auto" }}
         role="img"
       >
-        {/* edges */}
         {edges.map((e) => (
           <line
             key={e.key}
@@ -568,7 +506,6 @@ function TreeDiagram({ widget }: { widget: DiagramTreeWidget }) {
           />
         ))}
 
-        {/* nodes */}
         {all.map((n) => {
           const p = px(n);
           const isRoot = n.depth === 0;
@@ -610,10 +547,6 @@ function TreeDiagram({ widget }: { widget: DiagramTreeWidget }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Mind                                                                */
-/* ------------------------------------------------------------------ */
-
 const MIND_W = 500;
 const MIND_H = 360;
 const MIND_CX = MIND_W / 2;
@@ -625,7 +558,6 @@ const MIND_RADIUS = 140;
 function MindDiagram({ widget }: { widget: DiagramMindWidget }) {
   const n = widget.branches.length;
 
-  // angles start at -90deg (top) and go clockwise, evenly distributed
   function angle(i: number): number {
     return -Math.PI / 2 + (i * 2 * Math.PI) / n;
   }
@@ -637,17 +569,14 @@ function MindDiagram({ widget }: { widget: DiagramMindWidget }) {
         style={{ width: "100%", height: "auto" }}
         role="img"
       >
-        {/* connectors first so they sit under the branch circles */}
         {widget.branches.map((b, i) => {
           const a = angle(i);
           const ex = MIND_CX + Math.cos(a) * MIND_RADIUS;
           const ey = MIND_CY + Math.sin(a) * MIND_RADIUS;
-          // clip endpoints to the circles' edges
           const sx = MIND_CX + Math.cos(a) * MIND_CENTER_R;
           const sy = MIND_CY + Math.sin(a) * MIND_CENTER_R;
           const tx = MIND_CX + Math.cos(a) * (MIND_RADIUS - MIND_BRANCH_R);
           const ty = MIND_CY + Math.sin(a) * (MIND_RADIUS - MIND_BRANCH_R);
-          // ex/ey unused but illustrative; suppress lint
           void ex;
           void ey;
           return (
@@ -663,7 +592,6 @@ function MindDiagram({ widget }: { widget: DiagramMindWidget }) {
           );
         })}
 
-        {/* central concept */}
         <g>
           <circle cx={MIND_CX} cy={MIND_CY} r={MIND_CENTER_R} fill={BAP_RED} />
           <text
@@ -678,7 +606,6 @@ function MindDiagram({ widget }: { widget: DiagramMindWidget }) {
           </text>
         </g>
 
-        {/* branches */}
         {widget.branches.map((b, i) => {
           const a = angle(i);
           const bx = MIND_CX + Math.cos(a) * MIND_RADIUS;
@@ -714,10 +641,6 @@ function MindDiagram({ widget }: { widget: DiagramMindWidget }) {
   );
 }
 
-/* ------------------------------------------------------------------ */
-/* Venn                                                                */
-/* ------------------------------------------------------------------ */
-
 interface VennCircle {
   cx: number;
   cy: number;
@@ -746,14 +669,11 @@ const VENN_3_CIRCLES: VennCircle[] = [
   { cx: 200, cy: 220, r: 80, fill: VENN_AMBER },
 ];
 
-// Centroid lookups, keyed by the sorted setIds joined by "|".
 function vennCentroid(
   setIdsSorted: string[],
-  setIdInOrder: string[], // sets[].id in array order, used to map → slot keys
+  setIdInOrder: string[],
   setCount: number,
 ): VennCentroid | null {
-  // Map provided ids to canonical slot keys "a"/"b"/"c" by their order
-  // in the widget's `sets` array.
   const slotByActual = new Map<string, string>();
   const slotNames = ["a", "b", "c"];
   for (let i = 0; i < setIdInOrder.length; i += 1) {
@@ -774,7 +694,6 @@ function vennCentroid(
     return map[slots] ?? null;
   }
   if (setCount === 3) {
-    // Hand-tuned centroids for the standard 3-set Venn layout above.
     const map: Record<string, VennCentroid> = {
       a: { x: 105, y: 110 },
       b: { x: 295, y: 110 },
@@ -804,7 +723,6 @@ function VennDiagram({ widget }: { widget: DiagramVennWidget }) {
         style={{ width: "100%", height: "auto" }}
         role="img"
       >
-        {/* circles */}
         {circles.map((c, i) => (
           <circle
             key={`c-${i}`}
@@ -819,11 +737,9 @@ function VennDiagram({ widget }: { widget: DiagramVennWidget }) {
           />
         ))}
 
-        {/* set labels — placed at the outside of each circle */}
         {widget.sets.map((s, i) => {
           const c = circles[i];
           if (!c) return null;
-          // Place above the circle for the top two; below for the third.
           const labelY = setCount === 3 && i === 2 ? c.cy + c.r + 18 : c.cy - c.r - 8;
           return (
             <text
@@ -840,7 +756,6 @@ function VennDiagram({ widget }: { widget: DiagramVennWidget }) {
           );
         })}
 
-        {/* region labels — each at its precomputed centroid */}
         {widget.regions.map((r) => (
           <VennRegionLabel
             key={r.id}
@@ -881,10 +796,6 @@ function VennRegionLabel({
     </text>
   );
 }
-
-/* ------------------------------------------------------------------ */
-/* utilities                                                           */
-/* ------------------------------------------------------------------ */
 
 function truncate(s: string, max: number): string {
   return s.length <= max ? s : s.slice(0, max - 1) + "…";

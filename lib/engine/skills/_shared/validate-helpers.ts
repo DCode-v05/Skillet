@@ -1,18 +1,11 @@
-/**
- * Cross-skill validator helpers. Used by each JSON skill's `validate.ts`
- * so the per-skill files only contain skill-specific rules.
- */
-
 export interface ValidationResult {
   valid: boolean;
   issues: string[];
   summary: string;
 }
 
-// Match short, single-line [...] template placeholders.
 const PLACEHOLDER_RE = /\[[A-Za-z][^\]\n"{}]*\]/g;
 
-/** Recursive string-only walker. */
 export function walkStrings(node: unknown, visit: (s: string) => void): void {
   if (typeof node === "string") visit(node);
   else if (Array.isArray(node)) for (const x of node) walkStrings(x, visit);
@@ -22,7 +15,6 @@ export function walkStrings(node: unknown, visit: (s: string) => void): void {
   }
 }
 
-/** Catch unfilled `[bracketed placeholders]` left over from template.md. */
 export function checkPlaceholders(node: unknown, issues: string[]): void {
   walkStrings(node, (s) => {
     for (const m of s.matchAll(PLACEHOLDER_RE)) {
@@ -31,7 +23,6 @@ export function checkPlaceholders(node: unknown, issues: string[]): void {
   });
 }
 
-/** Require a set of top-level keys; push an issue per missing key. */
 export function requireKeys(
   data: Record<string, unknown>,
   keys: readonly string[],
@@ -42,7 +33,6 @@ export function requireKeys(
   }
 }
 
-/** Assert that `input` is a plain object. Returns null + pushes issue on fail. */
 export function asObject(
   input: unknown,
   issues: string[],
@@ -54,7 +44,6 @@ export function asObject(
   return input as Record<string, unknown>;
 }
 
-/** Build a final ValidationResult — valid iff `issues.length === 0`. */
 export function buildResult(issues: string[], okSummary: string): ValidationResult {
   if (issues.length === 0) {
     return { valid: true, issues: [], summary: okSummary };
@@ -66,7 +55,6 @@ export function buildResult(issues: string[], okSummary: string): ValidationResu
   };
 }
 
-/** Validate that each item has a unique `id` string. */
 export function uniqueIds(
   items: Array<Record<string, unknown>>,
   noun: string,
@@ -78,7 +66,6 @@ export function uniqueIds(
   }
 }
 
-/** Validate http/https URL shape. */
 export function isHttpUrl(s: string): boolean {
   try {
     const u = new URL(s);

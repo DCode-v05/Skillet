@@ -1,13 +1,3 @@
-/**
- * Generic JSON-skill validator runner. Each skill's `scripts/validate.sh`
- * delegates here:
- *
- *   tsx eval/validate-skill-json.ts <intent> <path-to-json>
- *
- * Looks up the validator in `lib/engine/skills/json-registry.ts` and runs
- * it. Same OK/FAIL output and exit codes as the per-skill Python validator
- * would have given.
- */
 import { readFileSync } from "node:fs";
 import { getJsonSkill, JSON_INTENTS } from "@/lib/engine/skills/json-registry";
 

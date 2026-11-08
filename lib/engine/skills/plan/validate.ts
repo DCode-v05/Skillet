@@ -10,15 +10,10 @@ import {
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-/**
- * Parse an ISO date (YYYY-MM-DD) to a timestamp. Returns NaN if the string
- * is malformed or doesn't round-trip (e.g. "2026-02-31").
- */
 function parseISO(s: string): number {
   if (!ISO_DATE_RE.test(s)) return NaN;
   const t = Date.parse(s + "T00:00:00Z");
   if (Number.isNaN(t)) return NaN;
-  // Round-trip check — Date.parse normalizes Feb 31 → Mar 3.
   const d = new Date(t);
   const round =
     d.getUTCFullYear().toString().padStart(4, "0") +

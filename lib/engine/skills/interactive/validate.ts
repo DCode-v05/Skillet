@@ -23,14 +23,6 @@ const OUTPUT_FORMATS: ReadonlySet<InteractiveOutputFormat> = new Set([
 const CALC_INPUT_KINDS = new Set(["number", "range"]);
 const FORM_FIELD_KINDS = new Set(["text", "email", "textarea", "select"]);
 
-/**
- * Tokens recognized by both validator and renderer's safe formula parser.
- *
- * Identifiers are `[A-Za-z_][A-Za-z0-9_]*` (no hyphens) so they don't
- * collide with the subtraction operator. Kebab-case input ids are legal
- * for the JSON schema, but they can't appear in a formula — the validator
- * will flag the mismatch.
- */
 const FORMULA_TOKEN_RE = /\s+|(\+|-|\*|\/|\(|\))|([A-Za-z_][A-Za-z0-9_]*)|([0-9]+(?:\.[0-9]+)?)/g;
 
 export function validateInteractive(input: unknown): ValidationResult {
@@ -130,7 +122,6 @@ function validateCalculator(
     issues.push(`outputUnit must be a string if present`);
   }
 
-  // Formula safety: only input ids, numeric literals, + - * / and parens.
   if (typeof data.formula !== "string" || data.formula.length === 0) {
     issues.push(`formula must be a non-empty string`);
   } else {
@@ -172,7 +163,6 @@ function scanFormulaTokens(
   validIds: ReadonlySet<string>,
 ): FormulaIssue[] {
   const issues: FormulaIssue[] = [];
-  // Re-anchor: copy the literal here so the global regex state is fresh.
   const re = new RegExp(FORMULA_TOKEN_RE.source, "g");
   let pos = 0;
   let m: RegExpExecArray | null;
@@ -343,7 +333,6 @@ export function isInteractiveWidget(input: unknown): input is InteractiveWidget 
   return validateInteractive(input).valid;
 }
 
-// Re-exports so the React renderer can share the same kind sets if needed.
 export type {
   InteractiveCalculatorInput,
   InteractiveFormField,

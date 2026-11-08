@@ -1,13 +1,6 @@
-/**
- * `npm run eval` — sweeps every (model × skill on/off) combo against the
- * test prompts, scores output structurally, prints a $/successful-render
- * ranking. Requires Node 20.12+ for process.loadEnvFile.
- */
-
 try {
   process.loadEnvFile?.(".env.local");
 } catch {
-  /* missing file or unsupported runtime — fall through */
 }
 
 import { promises as fs } from "node:fs";
@@ -73,9 +66,6 @@ async function runOne(combo: Combo, prompt: TestPrompt): Promise<{
     else if (ev.type === "usage") usage = ev.usage as never;
     else if (ev.type === "error") throw new Error(ev.message);
   }
-  // Structural scoring was HTML-specific. After the JSON migration we just
-  // record whether a widget was emitted; semantic scoring per skill is a
-  // follow-up using the per-skill validators in lib/engine/skills/*/validate.ts.
   const widgetHtml = widgetJson ? JSON.stringify(widgetJson) : "";
   return { text, widgetHtml, usage, latencyMs: Date.now() - start };
 }

@@ -29,12 +29,6 @@ export interface TraceStep {
   isError: boolean;
 }
 
-/**
- * Discriminated union of all JSON-output widgets. Grows one variant per
- * super-skill as we migrate from HTML to JSON output. Each variant carries
- * a `widget:` field (the JSON's discriminator) that the renderer registry
- * keys off of.
- */
 export type JsonWidget =
   | ComparisonTableWidget
   | ChipsWidget

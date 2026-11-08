@@ -42,8 +42,6 @@ export function validateDiagram(input: unknown): ValidationResult {
   return buildResult(issues, "");
 }
 
-/* ---------------- flow ---------------- */
-
 function validateFlow(
   data: Record<string, unknown>,
   issues: string[],
@@ -112,8 +110,6 @@ function validateFlow(
     `OK: diagram/flow valid (${nodes.length} nodes, ${edges.length} edges)`,
   );
 }
-
-/* ---------------- sequence ---------------- */
 
 function validateSequence(
   data: Record<string, unknown>,
@@ -190,8 +186,6 @@ function validateSequence(
   );
 }
 
-/* ---------------- tree ---------------- */
-
 function validateTree(
   data: Record<string, unknown>,
   issues: string[],
@@ -249,8 +243,6 @@ function walkTree(
   }
 }
 
-/* ---------------- mind ---------------- */
-
 function validateMind(
   data: Record<string, unknown>,
   issues: string[],
@@ -280,8 +272,6 @@ function validateMind(
     `OK: diagram/mind valid (${branches.length} branches)`,
   );
 }
-
-/* ---------------- venn ---------------- */
 
 function validateVenn(
   data: Record<string, unknown>,

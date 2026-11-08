@@ -22,10 +22,6 @@ export function DashboardWidget({ widget }: { widget: DashboardWidget }) {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Variant: KPI tile grid
-// ---------------------------------------------------------------------------
-
 function Kpi({ widget }: { widget: DashboardKpiWidget }) {
   return (
     <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4">
@@ -91,7 +87,6 @@ function DeltaArrow({ direction }: { direction: "up" | "down" | "flat" }) {
       </svg>
     );
   }
-  // Up: arrowhead at top. Down: arrowhead at bottom. Same shaft + head shape.
   if (direction === "up") {
     return (
       <svg viewBox="0 0 14 14" width="12" height="12" aria-hidden="true">
@@ -119,10 +114,6 @@ function DeltaArrow({ direction }: { direction: "up" | "down" | "flat" }) {
     </svg>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Variant: profile card
-// ---------------------------------------------------------------------------
 
 function Profile({ widget }: { widget: DashboardProfileWidget }) {
   return (
@@ -170,10 +161,6 @@ function Profile({ widget }: { widget: DashboardProfileWidget }) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Variant: kanban board
-// ---------------------------------------------------------------------------
-
 function Kanban({ widget }: { widget: DashboardKanbanWidget }) {
   const cols = widget.columns.length;
   return (
@@ -219,10 +206,6 @@ function Kanban({ widget }: { widget: DashboardKanbanWidget }) {
     </div>
   );
 }
-
-// ---------------------------------------------------------------------------
-// Variant: pricing tiers
-// ---------------------------------------------------------------------------
 
 function Pricing({ widget }: { widget: DashboardPricingWidget }) {
   const cols = widget.tiers.length;
@@ -315,10 +298,6 @@ function PricingTier({ tier }: { tier: DashboardPricingTier }) {
   );
 }
 
-/**
- * Hand-drawn SVG check / cross — replaces Unicode ✓ / ✗ glyphs so the
- * pricing feature list renders identically regardless of font.
- */
 function FeatureIcon({ included }: { included: boolean }) {
   if (included) {
     return (

@@ -1,21 +1,5 @@
 "use client";
 
-/**
- * Interactive widget renderer.
- *
- * Three variants, all driven by React state. The LLM never ships a script —
- * runtime behavior lives entirely in this file:
- *
- *  - calculator: <input> / <range> drive a useState bag of numbers; the
- *                output panel re-renders on each change via a tiny
- *                recursive-descent expression evaluator (NOT eval / Function).
- *  - quiz:       radios feed a selected-answer map; submit computes the
- *                score in React and reveals per-question ✓ / ✗ feedback
- *                plus the "Walk me through each answer" chip.
- *  - form:       visual-only. The submit button carries data-bap-prompt;
- *                the host dispatches the next user message on click.
- */
-
 import { useMemo, useState } from "react";
 import type {
   InteractiveCalculatorInput,
@@ -33,10 +17,6 @@ export function InteractiveWidget({ widget }: { widget: InteractiveWidget }) {
   if (widget.variant === "quiz") return <Quiz widget={widget} />;
   return <Form widget={widget} />;
 }
-
-// ──────────────────────────────────────────────────────────────────────────
-// Shared shell
-// ──────────────────────────────────────────────────────────────────────────
 
 function Shell({
   title,
@@ -62,17 +42,11 @@ function Shell({
   );
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// Calculator
-// ──────────────────────────────────────────────────────────────────────────
-
 function Calculator({ widget }: { widget: InteractiveCalculatorWidget }) {
   const [values, setValues] = useState<Record<string, number>>(() =>
     Object.fromEntries(widget.inputs.map((i) => [i.id, i.defaultValue])),
   );
 
-  // Recompute on every state change. Cache the parsed AST so we don't
-  // re-tokenize on each render.
   const evaluator = useMemo(() => buildEvaluator(widget.formula), [widget.formula]);
   const output = useMemo<{ text: string; error: boolean }>(() => {
     try {
@@ -174,7 +148,6 @@ function CalcInputRow({
           value={Number.isFinite(value) ? value : 0}
           onChange={(e) => {
             const raw = e.target.value;
-            // Allow the field to be temporarily empty; treat as 0 for evaluation.
             const n = raw === "" ? 0 : Number(raw);
             if (!Number.isNaN(n)) onChange(n);
           }}
@@ -203,10 +176,6 @@ function formatOutput(
   return unit ? `${core}${unit}` : core;
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// Safe formula evaluator (recursive descent, + - * / and parens)
-// ──────────────────────────────────────────────────────────────────────────
-
 type Token =
   | { kind: "num"; value: number }
   | { kind: "ident"; name: string }
@@ -216,9 +185,6 @@ type Token =
 
 function tokenize(src: string): Token[] {
   const tokens: Token[] = [];
-  // [A-Za-z_][A-Za-z0-9_]* — matches the validator's identifier rule. Hyphens
-  // are NOT part of identifiers (they parse as subtraction), so kebab-case
-  // input ids can't appear in formulas.
   const re = /\s+|(\+|-|\*|\/|\(|\))|([A-Za-z_][A-Za-z0-9_]*)|([0-9]+(?:\.[0-9]+)?)/g;
   let pos = 0;
   let m: RegExpExecArray | null;
@@ -236,7 +202,6 @@ function tokenize(src: string): Token[] {
     else if (op === ")") tokens.push({ kind: "rparen" });
     else if (ident !== undefined) tokens.push({ kind: "ident", name: ident });
     else if (num !== undefined) tokens.push({ kind: "num", value: Number(num) });
-    // else: whitespace — drop it
     pos = m.index + matched.length;
   }
   if (pos < src.length) {
@@ -251,11 +216,6 @@ type Node =
   | { kind: "neg"; arg: Node }
   | { kind: "bin"; op: "+" | "-" | "*" | "/"; left: Node; right: Node };
 
-/**
- * Tokenize + parse once. Returns a function that evaluates the AST against a
- * variable map. Throws if the formula is malformed or references an unknown
- * identifier.
- */
 function buildEvaluator(
   formula: string,
 ): (values: Record<string, number>) => number {
@@ -271,7 +231,6 @@ function buildEvaluator(
     return t;
   }
 
-  // expression := term (('+' | '-') term)*
   function parseExpression(): Node {
     let left = parseTerm();
     while (true) {
@@ -284,7 +243,6 @@ function buildEvaluator(
     }
     return left;
   }
-  // term := factor (('*' | '/') factor)*
   function parseTerm(): Node {
     let left = parseFactor();
     while (true) {
@@ -297,7 +255,6 @@ function buildEvaluator(
     }
     return left;
   }
-  // factor := '-' factor | '+' factor | primary
   function parseFactor(): Node {
     const t = peek();
     if (t && t.kind === "op" && t.value === "-") {
@@ -310,7 +267,6 @@ function buildEvaluator(
     }
     return parsePrimary();
   }
-  // primary := number | ident | '(' expression ')'
   function parsePrimary(): Node {
     const t = consume();
     if (t.kind === "num") return { kind: "num", value: t.value };
@@ -346,8 +302,6 @@ function buildEvaluator(
         if (node.op === "+") return l + r;
         if (node.op === "-") return l - r;
         if (node.op === "*") return l * r;
-        // Division: guard against /0 — return NaN so the renderer flags
-        // "(formula error)" rather than ±Infinity.
         if (r === 0) return Number.NaN;
         return l / r;
       }
@@ -356,10 +310,6 @@ function buildEvaluator(
 
   return (values) => evalNode(ast, values);
 }
-
-// ──────────────────────────────────────────────────────────────────────────
-// Quiz
-// ──────────────────────────────────────────────────────────────────────────
 
 function Quiz({ widget }: { widget: InteractiveQuizWidget }) {
   const [selected, setSelected] = useState<Record<string, string | null>>(() =>
@@ -537,10 +487,6 @@ function XIcon() {
     </svg>
   );
 }
-
-// ──────────────────────────────────────────────────────────────────────────
-// Form
-// ──────────────────────────────────────────────────────────────────────────
 
 function Form({ widget }: { widget: InteractiveFormWidget }) {
   return (

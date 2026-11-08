@@ -1,7 +1,3 @@
-// Demo prompts grouped by widget super-skill. `kind` matches the on-disk
-// skill folder; the user-facing variant intent comes through in the prompt
-// text itself (e.g. "Show me a pie chart" → the model picks intent=chart,
-// variant=pie inside).
 export interface PromptGroup {
   kind: string;
   label: string;

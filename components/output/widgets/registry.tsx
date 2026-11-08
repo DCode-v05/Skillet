@@ -1,10 +1,5 @@
 "use client";
 
-/**
- * Renderer registry for JSON-output widgets. Keyed by the `widget:` field
- * inside the widget JSON. One entry per JSON super-skill — variants are
- * dispatched inside their renderer.
- */
 import type { ReactElement } from "react";
 import type { JsonWidget } from "@/lib/types/engine-widgets";
 import { ComparisonTableWidget } from "./ComparisonTableWidget";

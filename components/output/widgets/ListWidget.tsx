@@ -53,13 +53,6 @@ function Checklist({ widget }: { widget: ListChecklistWidget }) {
   );
 }
 
-/**
- * Hand-drawn SVG checkbox — replaces the Unicode `□` / `✓` glyphs the
- * model was relying on. Always renders the same regardless of font.
- *
- * - `done`: filled BAP-red rounded square + white checkmark
- * - else:   transparent rounded square outlined in the secondary color
- */
 function CheckboxIcon({ done }: { done: boolean }) {
   if (done) {
     return (

@@ -1,14 +1,3 @@
-/**
- * JSON-skill registry. Single source of truth for which intents are
- * JSON-output and how to validate each one.
- *
- * Adding a new JSON super-skill = one line in `JSON_SKILLS` below + a TS
- * schema + a `validate.ts` next to its SKILL.md + an entry in the React
- * renderer registry (`components/output/widgets/registry.tsx`). The
- * executor (`runSubmitJson`), the tool schema enum, and the per-skill
- * `validate.sh` runner all read from here.
- */
-
 import type { JsonWidget } from "@/lib/types/engine-widgets";
 import { validateComparisonTable } from "./comparison-table/validate";
 import { validateChips } from "./chips/validate";

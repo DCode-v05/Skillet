@@ -1,15 +1,5 @@
 "use client";
 
-/**
- * Chart widget renderer — dispatches to one of six per-variant components.
- *
- * The model emits DATA ONLY (labels, values, ids, click prompts). Every
- * pixel of geometry — axis ticks, bar positions, pie arc paths, polygon
- * vertices, color scales, percentages — is computed here. This is what
- * fixes the HTML-output finishing issues (misaligned arrows, Unicode □
- * glyphs, axis labels overlapping bars, etc.).
- */
-
 import type {
   ChartBarWidget,
   ChartFunnelWidget,
@@ -45,10 +35,6 @@ export function ChartWidget({ widget }: { widget: ChartWidget }) {
   }
 }
 
-// =====================================================================
-// Frame — shared card chrome used by every variant
-// =====================================================================
-
 function ChartFrame({
   title,
   subtitle,
@@ -75,13 +61,6 @@ function ChartFrame({
   );
 }
 
-// =====================================================================
-// Bar chart
-// =====================================================================
-
-/**
- * Compute up to 5 "nice" tick values from 0 to a friendly ceiling ≥ max.
- */
 function niceTicks(maxRaw: number, targetCount = 5): number[] {
   if (maxRaw <= 0) return [0, 1];
   const exp = Math.floor(Math.log10(maxRaw));
@@ -128,8 +107,6 @@ function BarChart({ widget }: { widget: ChartBarWidget }) {
 
   const slot = chartW / widget.bars.length;
   const barW = slot * 0.7;
-  // Rotate x-axis labels if any label string is wider than the bar slot.
-  // Rough char width at font-size 10 is ~6px.
   const avgLabelLen = Math.max(
     ...widget.bars.map((b) => b.label.length),
   );
@@ -143,7 +120,6 @@ function BarChart({ widget }: { widget: ChartBarWidget }) {
       }
     >
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img">
-        {/* Gridlines + Y ticks */}
         {ticks.map((t, i) => {
           const y = M.top + chartH - (t / yMax) * chartH;
           return (
@@ -170,7 +146,6 @@ function BarChart({ widget }: { widget: ChartBarWidget }) {
           );
         })}
 
-        {/* Bars */}
         {widget.bars.map((b, i) => {
           const x = M.left + i * slot + (slot - barW) / 2;
           const h = yMax > 0 ? (b.value / yMax) * chartH : 0;
@@ -224,10 +199,6 @@ function BarChart({ widget }: { widget: ChartBarWidget }) {
     </ChartFrame>
   );
 }
-
-// =====================================================================
-// Pie chart
-// =====================================================================
 
 const PIE_COLORS = [
   "#EC3B4A",
@@ -304,10 +275,6 @@ function PieChart({ widget }: { widget: ChartPieWidget }) {
   );
 }
 
-// =====================================================================
-// Scatter chart
-// =====================================================================
-
 function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
   const W = 400;
   const H = 280;
@@ -331,7 +298,6 @@ function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
   const sy = (v: number) =>
     M.top + chartH - ((v - yMin) / (yMax - yMin || 1)) * chartH;
 
-  // Linear regression for trendline (least squares).
   let trend: { x1: number; y1: number; x2: number; y2: number } | null = null;
   if (widget.trendLine && widget.points.length >= 2) {
     const n = widget.points.length;
@@ -357,7 +323,6 @@ function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
   return (
     <ChartFrame title={widget.title}>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img">
-        {/* Y gridlines + ticks */}
         {yTicks.map((t, i) => {
           const y = sy(t);
           return (
@@ -383,7 +348,6 @@ function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
             </g>
           );
         })}
-        {/* X axis + ticks */}
         <line
           x1={M.left}
           x2={W - M.right}
@@ -415,7 +379,6 @@ function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
             </g>
           );
         })}
-        {/* Axis labels */}
         <text
           x={M.left + chartW / 2}
           y={H - 6}
@@ -436,7 +399,6 @@ function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
           {widget.yLabel}
         </text>
 
-        {/* Trend line */}
         {trend ? (
           <line
             x1={trend.x1}
@@ -449,7 +411,6 @@ function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
           />
         ) : null}
 
-        {/* Points */}
         {widget.points.map((p) => (
           <circle
             key={p.id}
@@ -471,10 +432,6 @@ function ScatterChart({ widget }: { widget: ChartScatterWidget }) {
     </ChartFrame>
   );
 }
-
-// =====================================================================
-// Funnel chart
-// =====================================================================
 
 const FUNNEL_COLORS = [
   "#EC3B4A",
@@ -540,10 +497,6 @@ function FunnelChart({ widget }: { widget: ChartFunnelWidget }) {
   );
 }
 
-// =====================================================================
-// Radar chart
-// =====================================================================
-
 const RADAR_COLOR_MAP: Record<RadarEntityColor, string> = {
   red: ACCENT,
   blue: BLUE,
@@ -580,7 +533,6 @@ function RadarChart({ widget }: { widget: ChartRadarWidget }) {
     <ChartFrame title={widget.title}>
       <div className="flex flex-col items-center gap-3">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-[360px]" role="img">
-          {/* Concentric guide polygons */}
           {guideRings.map((g, gi) => {
             const pts = Array.from({ length: n }, (_, i) => {
               const t = tip(i, g);
@@ -596,11 +548,9 @@ function RadarChart({ widget }: { widget: ChartRadarWidget }) {
               />
             );
           })}
-          {/* Axis lines + labels */}
           {widget.axes.map((axis, i) => {
             const t = tip(i, 1);
             const lp = labelPos(i);
-            // Anchor labels intelligently: left of axis if x < cx, right if >, centered if near vertical.
             const dx = lp.x - cx;
             const anchor: "start" | "middle" | "end" =
               Math.abs(dx) < 4 ? "middle" : dx > 0 ? "start" : "end";
@@ -626,7 +576,6 @@ function RadarChart({ widget }: { widget: ChartRadarWidget }) {
               </g>
             );
           })}
-          {/* Entity polygons */}
           {widget.entities.map((e) => {
             const color = RADAR_COLOR_MAP[e.color];
             const pts = e.values
@@ -657,7 +606,6 @@ function RadarChart({ widget }: { widget: ChartRadarWidget }) {
             );
           })}
         </svg>
-        {/* Legend */}
         <div className="flex flex-wrap gap-x-3 gap-y-1 justify-center text-xs">
           {widget.entities.map((e) => (
             <div key={e.id} className="flex items-center gap-1.5">
@@ -675,13 +623,7 @@ function RadarChart({ widget }: { widget: ChartRadarWidget }) {
   );
 }
 
-// =====================================================================
-// Heatmap chart (HTML table, not SVG)
-// =====================================================================
-
 function HeatmapChart({ widget }: { widget: ChartHeatmapWidget }) {
-  // Build 2D matrix from sparse cells. Missing positions default to null
-  // (which we render as 0-opacity, no click prompt — empty cell).
   const matrix: Array<
     Array<{ value: number; clickPrompt: string } | null>
   > = widget.yLabels.map(() => widget.xLabels.map(() => null));

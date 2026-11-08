@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# validate.sh — Check that a comparison-table widget JSON is well-formed
-#               and renderable before sending it to the host.
-#
-# Usage:   bash validate.sh path/to/output.json
-# Exit:    0 = valid, 1 = invalid (with reasons printed to stderr)
-#
-# Uses python3 (stdlib only) for portability — no jq required.
 
 set -euo pipefail
 

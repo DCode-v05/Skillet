@@ -16,8 +16,6 @@ export function CodeBlockWidget({ widget }: Props) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
-      // Clipboard API unavailable (insecure context, denied permission, etc.).
-      // Silently no-op — the user can still select + copy manually.
     }
   };
 
